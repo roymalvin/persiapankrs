@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palet Warna UAJY */
+  --color-uajy-bg: #0A4375;          /* Biru UAJY (Background SIAKAD) */
+  --color-uajy-bg-dark: #073259;     /* Versi lebih gelap untuk card/elemen */
+  --color-uajy-yellow: #EBA918;      /* Kuning Atma Jaya */
+  --color-uajy-yellow-hover: #D49512;
+  --color-uajy-button: #116DF9;      /* Biru terang tombol Submit */
+  --color-uajy-button-hover: #0B5CE0;
+}
+
+@layer base {
+  body {
+    /* Kita jadikan Biru Gelap UAJY sebagai background utama pengganti hitam/slate */
+    background-color: var(--color-uajy-bg);
+    color: #f1f5f9; /* slate-100 */
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  
+  /* Opsional: Membuat scrollbar sedikit lebih elegan di background biru */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-uajy-bg); 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-uajy-bg-dark); 
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-uajy-yellow); 
+  }
+}
