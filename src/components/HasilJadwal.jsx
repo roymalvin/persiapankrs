@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 
-// --- HELPER WARNA SINKRON DENGAN NAMA MATKUL ---
+//--- HELPER WARNA MATKUL---
 const COLORS = [
   "bg-blue-600",
   "bg-emerald-600",
@@ -47,7 +47,6 @@ const KartuJadwal = ({
 
   return (
     <div className="border border-white/10 rounded-2xl overflow-hidden bg-uajy-bg-dark mb-6 shadow-2xl transition-none">
-      {/* Header Kartu: Responsif & High-Contrast */}
       <div className="bg-black/20 px-4 py-4 sm:px-6 border-b border-white/10 flex justify-between items-center gap-3">
         <div className="flex flex-col">
           <span className="text-[8px] sm:text-[10px] font-black text-uajy-yellow uppercase tracking-[0.2em] leading-none mb-1">
@@ -65,7 +64,7 @@ const KartuJadwal = ({
         </button>
       </div>
 
-      {/* Area Tabel: Smart Overflow */}
+      {/* Area Tabel*/}
       <div
         ref={komponenPDF}
         className="p-2 sm:p-4 bg-uajy-bg-dark print:bg-white"
@@ -93,7 +92,7 @@ const KartuJadwal = ({
                   key={sesi}
                   className="border-t border-white/5 print:border-slate-300"
                 >
-                  {/* Kolom Sesi */}
+                  {/* Kolom Sesi*/}
                   <td className="p-2 border-r border-white/5 bg-black/10 text-center print:border-slate-300 print:bg-slate-50">
                     <div className="font-black text-white text-xs sm:text-sm print:text-black leading-none">
                       {sesi}
@@ -102,7 +101,7 @@ const KartuJadwal = ({
                       {waktuSesi[sesi]}
                     </div>
                   </td>
-                  {/* Kolom Hari */}
+                  {/* Kolom Hari*/}
                   {daftarHari.map((hari) => {
                     const matkul = kombinasi.find(
                       (k) => k.hari === hari && k.sesi.includes(sesi),
@@ -135,7 +134,7 @@ const KartuJadwal = ({
           </table>
         </div>
 
-        {/* Indikator Geser Mobile */}
+        {/*Mobile */}
         <div className="mt-3 flex items-center justify-center gap-2 sm:hidden opacity-30">
           <div className="h-px w-8 bg-white" />
           <p className="text-[8px] text-white font-black uppercase tracking-widest italic text-center">

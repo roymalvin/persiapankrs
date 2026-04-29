@@ -3,22 +3,21 @@ import { Zap, Globe, GraduationCap } from "lucide-react";
 const Header = ({ onGenerate, tipeKampus, setTipeKampus }) => {
   return (
     <header className="mb-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6 border-b border-white/10 pb-12 relative">
-      {/* Kiri: Branding */}
+      {/* Kiri*/}
       <div className="flex flex-col items-center xl:items-start text-center xl:text-left shrink-0">
         <div className="flex items-center gap-3">
           <img
-            src="/Logo KRSync.png"
-            alt="Logo KRSync"
+            src="/Logo PersiapanKRS.png"
+            alt="Logo PersiapanKRS"
             className="w-12 h-12 sm:w-15 sm:h-15 object-contain rounded-xl shadow-[0_0_20px_rgba(235,169,24,0.20)]"
           />
           <h1 className="text-4xl font-black text-white tracking-tighter italic leading-none">
-            <span className="text-uajy-yellow text-5xl">KR</span>
-            <span className="text-5xl">S</span>ync
+            Persiapan<span className="text-uajy-yellow text-5xl">KRS</span>
           </h1>
         </div>
       </div>
 
-      {/* Kanan: Interactive Controls */}
+      {/* Kanan*/}
       <div className="flex flex-col sm:flex-row items-center gap-4 w-full xl:w-auto shrink-0">
         <div className="bg-uajy-bg-dark border border-white/10 p-1 rounded-2xl flex w-full md:w-64">
           <button
@@ -51,7 +50,7 @@ const Header = ({ onGenerate, tipeKampus, setTipeKampus }) => {
         </button>
       </div>
 
-      {/* TENGAH BAWAH: Signature Roy Malvin */}
+      {/* TENGAH BAWAH*/}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex items-center gap-3 bg-uajy-bg px-4 py-1 pointer-events-none">
         <p className="text-[9px] font-black text-white/80 uppercase tracking-[0.4em] whitespace-nowrap">
           Made by <span className="text-uajy-yellow">Roy Malvin</span>

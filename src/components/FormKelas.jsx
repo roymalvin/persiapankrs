@@ -125,7 +125,6 @@ const FormKelas = ({
     <div
       className={`bg-uajy-bg-dark rounded-2xl border-t-2 ${itemSedangDiedit ? "border-uajy-yellow" : "border-white/10"} p-5 shadow-2xl`}
     >
-      {/* Tab Switcher - UAJY Style */}
       {!itemSedangDiedit && (
         <div className="flex bg-uajy-bg/40 rounded-xl p-1 mb-6 border border-white/5">
           <button

@@ -13,7 +13,7 @@ const WAKTU_SESI = {
 };
 
 function App() {
-  // PENGAMAN 1: Try-catch saat load data awal
+  // Try catch saat load data awal
   const [jadwal, setJadwal] = useState(() => {
     try {
       const savedJadwal = localStorage.getItem("krsync_data");
@@ -76,7 +76,7 @@ function App() {
   const generateJadwal = () => {
     if (jadwal.length === 0) return alert("Tambahkan jadwal dulu!");
 
-    // PENGAMAN 2: Pastikan data matkul valid sebelum digrouping
+    // Memastikan data matkul valid sebelum digrouping
     const grouped = jadwal.reduce((acc, curr) => {
       if (!curr.nama) return acc;
       if (!acc[curr.nama]) acc[curr.nama] = [];
@@ -172,7 +172,7 @@ function App() {
         </div>
       </div>
 
-      {/* Floating Action Bar Mobile */}
+      {/* Floating Action Bar untuk Mobile */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-uajy-bg-dark/95 backdrop-blur-md border-t border-white/10 z-50">
         <div className="max-w-md mx-auto flex items-center gap-4">
           <div className="flex flex-col min-w-max">
@@ -191,7 +191,6 @@ function App() {
           </button>
         </div>
       </div>
-
     </div>
   );
 }

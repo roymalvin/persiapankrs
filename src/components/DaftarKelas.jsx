@@ -24,7 +24,6 @@ const getCourseColor = (name) => {
 const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
   return (
     <div className="space-y-4">
-      {/* Label Heading yang lebih low-key agar tidak berisik */}
       <h2 className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] flex items-center gap-2">
         <Clock size={14} /> Registered Units ({jadwal.length})
       </h2>
@@ -50,7 +49,6 @@ const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
                     {item.nama}
                   </h4>
                   <div className="flex items-center gap-2 mt-1.5">
-                    {/* Badge Kelas dengan warna uajy-bg yang lebih kontras */}
                     <span className="text-[9px] font-black px-1.5 py-0.5 bg-uajy-bg text-uajy-yellow rounded border border-white/5">
                       KLAS {item.kelas}
                     </span>
