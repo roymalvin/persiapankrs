@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ClipboardPaste, Save, X, AlertCircle } from "lucide-react";
+import { Plus, ClipboardPaste, Save, X } from "lucide-react";
 
 const FormKelas = ({
   onTambah,
@@ -85,29 +85,37 @@ const FormKelas = ({
 
   const handlePasteSubmit = () => {
     if (!pasteText.trim()) return alert("Teks tidak boleh kosong!");
+
     const barisTeks = pasteText
       .split("\n")
       .map((b) => b.trim())
       .filter((b) => b !== "");
+
     const jadwalBaruList = [];
 
-    for (let i = 0; i < barisTeks.length; i += 5) {
-      if (
-        barisTeks[i] &&
-        barisTeks[i + 2] &&
-        barisTeks[i + 3] &&
-        barisTeks[i + 4]
-      ) {
-        const sesiMatch = barisTeks[i + 4].match(/\d+/);
+    for (let i = 0; i < barisTeks.length; i++) {
+      const barisKini = barisTeks[i].toLowerCase();
+
+      const matchHari = daftarHari.find(
+        (h) =>
+          barisKini === h.toLowerCase() ||
+          barisKini.startsWith(h.toLowerCase()),
+      );
+
+      if (matchHari && i >= 3 && i + 1 < barisTeks.length) {
+        const matkul = barisTeks[i - 3];
+        const dosen = barisTeks[i - 2];
+        const kelas = barisTeks[i - 1];
+        const teksSesi = barisTeks[i + 1];
+
+        const sesiMatch = teksSesi.match(/\d+/);
+
         jadwalBaruList.push({
-          id: Date.now().toString() + Math.random().toString(16).slice(2),
-          nama: barisTeks[i],
-          dosen: barisTeks[i + 1] || "-",
-          kelas: barisTeks[i + 2].toUpperCase(),
-          hari:
-            daftarHari.find((h) =>
-              barisTeks[i + 3].toLowerCase().includes(h.toLowerCase()),
-            ) || "Senin",
+          id: Date.now().toString() + Math.random().toString(16).slice(2) + i,
+          nama: matkul,
+          dosen: dosen || "-",
+          kelas: kelas.toUpperCase(),
+          hari: matchHari,
           sesi: [sesiMatch ? Number(sesiMatch[0]) : 1],
         });
       }
@@ -117,7 +125,9 @@ const FormKelas = ({
       onTambahBulk(jadwalBaruList);
       setPasteText("");
     } else {
-      alert("Format teks tidak dikenali.");
+      alert(
+        "Format teks tidak dikenali. Pastikan struktur dari SIATMA adalah: Matkul -> Dosen -> Kelas -> Hari -> Sesi",
+      );
     }
   };
 
@@ -154,6 +164,19 @@ const FormKelas = ({
               value={input.nama}
               onChange={(e) => setInput({ ...input, nama: e.target.value })}
               placeholder="Contoh: Pemrograman Web"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-wider mb-1 block">
+              Dosen Pengampu (Opsional)
+            </label>
+            <input
+              type="text"
+              className="w-full bg-uajy-bg border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-uajy-yellow outline-none transition-none placeholder:text-white/20"
+              value={input.dosen}
+              onChange={(e) => setInput({ ...input, dosen: e.target.value })}
+              placeholder="Contoh: Prof. Ir. Suyoto"
             />
           </div>
 

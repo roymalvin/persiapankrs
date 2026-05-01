@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { generateJadwalAman } from "./utils/scheduler";
 import Header from "./components/Header";
 import FormKelas from "./components/FormKelas";
 import DaftarKelas from "./components/DaftarKelas";
@@ -40,6 +41,8 @@ function App() {
     tanpaSesi3: false,
     tanpaSesi4: false,
     tanpaSesi5: false,
+    dosenDisukai: [],
+    dosenDihindari: [],
   });
 
   useEffect(() => {
@@ -76,7 +79,6 @@ function App() {
   const generateJadwal = () => {
     if (jadwal.length === 0) return alert("Tambahkan jadwal dulu!");
 
-    // Memastikan data matkul valid sebelum digrouping
     const grouped = jadwal.reduce((acc, curr) => {
       if (!curr.nama) return acc;
       if (!acc[curr.nama]) acc[curr.nama] = [];
@@ -84,36 +86,21 @@ function App() {
       return acc;
     }, {});
 
-    const groups = Object.values(grouped);
+    const formattedData = Object.keys(grouped).map((namaMatkul) => ({
+      nama: namaMatkul,
+      daftarKelas: grouped[namaMatkul],
+    }));
 
-    const combineAndFilter = (groupsArray) => {
-      if (groupsArray.length === 0) return [[]];
-      const [firstGroup, ...restGroups] = groupsArray;
-      const combinationsWithoutFirst = combineAndFilter(restGroups);
-      const result = [];
+    const hasilAman = generateJadwalAman(formattedData);
 
-      firstGroup.forEach((kelas) => {
-        combinationsWithoutFirst.forEach((combo) => {
-          let isClash = false;
-          for (let existingKelas of combo) {
-            if (existingKelas.hari === kelas.hari) {
-              const hasIntersection = kelas.sesi.some((s) =>
-                existingKelas.sesi.includes(s),
-              );
-              if (hasIntersection) {
-                isClash = true;
-                break;
-              }
-            }
-          }
-          if (!isClash) result.push([kelas, ...combo]);
-        });
-      });
-      return result;
-    };
-
-    setHasilKombinasi(combineAndFilter(groups));
+    setHasilKombinasi(hasilAman);
     setIsGenerated(true);
+
+    if (hasilAman.length === 0) {
+      alert(
+        "Tidak ada kombinasi jadwal yang tidak bentrok. Coba ganti atau kurangi matkul.",
+      );
+    }
   };
 
   return (
@@ -126,7 +113,6 @@ function App() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
-          {/* Sidebar */}
           <div className="lg:col-span-3 space-y-8">
             <section>
               <h2 className="text-[10px] font-black tracking-[0.3em] text-white/30 mb-4 uppercase">
@@ -156,7 +142,6 @@ function App() {
             </section>
           </div>
 
-          {/* Output Area */}
           <div className="lg:col-span-9">
             <h2 className="text-[10px] font-black tracking-[0.3em] text-white/30 mb-4 uppercase">
               Simulation Results
@@ -172,7 +157,6 @@ function App() {
         </div>
       </div>
 
-      {/* Floating Action Bar untuk Mobile */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-uajy-bg-dark/95 backdrop-blur-md border-t border-white/10 z-50">
         <div className="max-w-md mx-auto flex items-center gap-4">
           <div className="flex flex-col min-w-max">

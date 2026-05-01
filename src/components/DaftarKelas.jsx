@@ -1,18 +1,18 @@
-import { Clock, Trash2, Pencil } from "lucide-react";
+import { Clock, Trash2, Pencil, User } from "lucide-react";
 
 const COLORS = [
-  "bg-blue-600",
-  "bg-emerald-600",
-  "bg-violet-600",
-  "bg-rose-600",
-  "bg-amber-600",
-  "bg-cyan-600",
-  "bg-orange-600",
-  "bg-indigo-600",
+  "border-blue-600",
+  "border-emerald-600",
+  "border-violet-600",
+  "border-rose-600",
+  "border-amber-600",
+  "border-cyan-600",
+  "border-orange-600",
+  "border-indigo-600",
 ];
 
-const getCourseColor = (name) => {
-  if (!name) return "bg-slate-600";
+const getCourseBorderColor = (name) => {
+  if (!name) return "border-slate-600";
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -24,10 +24,6 @@ const getCourseColor = (name) => {
 const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
   return (
     <div className="space-y-4">
-      <h2 className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] flex items-center gap-2">
-        <Clock size={14} /> Registered Units ({jadwal.length})
-      </h2>
-
       <div className="space-y-3 max-h-125 overflow-y-auto pr-2 custom-scrollbar">
         {jadwal.length === 0 ? (
           <div className="text-center py-10 border border-dashed border-white/10 rounded-xl text-white/20 text-[10px] font-black uppercase tracking-widest">
@@ -35,9 +31,13 @@ const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
           </div>
         ) : (
           jadwal.map((item) => {
-            const isSesiAngka = typeof item.sesi[0] === "number";
-            const colorClass = getCourseColor(item.nama);
-            const borderColorClass = colorClass.replace("bg-", "border-");
+            const borderColorClass = getCourseBorderColor(item.nama);
+
+            const sesiArray = Array.isArray(item.sesi)
+              ? item.sesi
+              : [item.sesi];
+            const textSesi = sesiArray.join(", ");
+            const isSesiAngka = !isNaN(parseInt(sesiArray[0]));
 
             return (
               <div
@@ -48,13 +48,21 @@ const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
                   <h4 className="text-white font-black text-sm tracking-tight truncate uppercase leading-tight">
                     {item.nama}
                   </h4>
+
+                  {item.dosen && item.dosen !== "-" && (
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-white/50 truncate uppercase mt-1">
+                      <User size={10} />
+                      {item.dosen}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className="text-[9px] font-black px-1.5 py-0.5 bg-uajy-bg text-uajy-yellow rounded border border-white/5">
                       KLAS {item.kelas}
                     </span>
                     <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">
                       {item.hari} •{" "}
-                      {isSesiAngka ? `SESI ${item.sesi[0]}` : item.sesi[0]}
+                      {isSesiAngka ? `SESI ${textSesi}` : textSesi}
                     </span>
                   </div>
                 </div>

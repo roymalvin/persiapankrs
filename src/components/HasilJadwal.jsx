@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import {
   Zap,
   CheckCircle2,
@@ -6,6 +6,9 @@ import {
   EyeOff,
   AlertTriangle,
   Settings2,
+  UserCheck,
+  UserMinus,
+  X,
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 
@@ -41,7 +44,7 @@ const KartuJadwal = ({
   const komponenPDF = useRef(null);
   const handleCetakPDF = useReactToPrint({
     contentRef: komponenPDF,
-    documentTitle: `KRSync_Opsi_${index + 1}`,
+    documentTitle: `KRSync_Opsi_${index}`,
     pageStyle: `@page { size: landscape; margin: 7mm !important; } @media print { body { -webkit-print-color-adjust: exact; } }`,
   });
 
@@ -53,7 +56,7 @@ const KartuJadwal = ({
             Generated Solution
           </span>
           <span className="font-black text-white text-sm sm:text-lg leading-none uppercase italic">
-            Opsi #{index + 1}
+            Opsi #{index}
           </span>
         </div>
         <button
@@ -64,7 +67,6 @@ const KartuJadwal = ({
         </button>
       </div>
 
-      {/* Area Tabel*/}
       <div
         ref={komponenPDF}
         className="p-2 sm:p-4 bg-uajy-bg-dark print:bg-white"
@@ -92,7 +94,6 @@ const KartuJadwal = ({
                   key={sesi}
                   className="border-t border-white/5 print:border-slate-300"
                 >
-                  {/* Kolom Sesi*/}
                   <td className="p-2 border-r border-white/5 bg-black/10 text-center print:border-slate-300 print:bg-slate-50">
                     <div className="font-black text-white text-xs sm:text-sm print:text-black leading-none">
                       {sesi}
@@ -101,11 +102,17 @@ const KartuJadwal = ({
                       {waktuSesi[sesi]}
                     </div>
                   </td>
-                  {/* Kolom Hari*/}
                   {daftarHari.map((hari) => {
-                    const matkul = kombinasi.find(
-                      (k) => k.hari === hari && k.sesi.includes(sesi),
-                    );
+                    const matkul = kombinasi.find((k) => {
+                      const sesiArray = Array.isArray(k.sesi)
+                        ? k.sesi
+                        : [k.sesi];
+                      return (
+                        k.hari === hari &&
+                        sesiArray.some((s) => String(s) === String(sesi))
+                      );
+                    });
+
                     return (
                       <td
                         key={`${hari}-${sesi}`}
@@ -113,11 +120,17 @@ const KartuJadwal = ({
                       >
                         {matkul && (
                           <div
-                            className={`${getCourseColor(matkul.nama)} text-white rounded-lg p-2 h-full flex flex-col justify-between border border-white/10 shadow-lg print:border-black print:bg-white!`}
+                            className={`${getCourseColor(matkul.namaMatkul)} text-white rounded-lg p-2 h-full flex flex-col justify-between border border-white/10 shadow-lg print:border-black print:bg-white!`}
                           >
-                            <span className="font-black text-[8px] sm:text-[10px] leading-tight uppercase line-clamp-3 print:text-black">
-                              {matkul.nama}
-                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-black text-[8px] sm:text-[10px] leading-tight uppercase line-clamp-2 print:text-black">
+                                {matkul.namaMatkul}
+                              </span>
+                              {/* Tambahan: Tampilkan nama dosen kecil di bawah nama matkul */}
+                              <span className="text-[6px] sm:text-[7px] font-bold text-white/70 uppercase truncate print:text-slate-600">
+                                {matkul.dosen !== "-" ? matkul.dosen : ""}
+                              </span>
+                            </div>
                             <div className="mt-auto">
                               <span className="bg-black/20 text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded border border-white/10 uppercase print:text-black print:border-black">
                                 KLS {matkul.kelas}
@@ -133,15 +146,6 @@ const KartuJadwal = ({
             </tbody>
           </table>
         </div>
-
-        {/*Mobile */}
-        <div className="mt-3 flex items-center justify-center gap-2 sm:hidden opacity-30">
-          <div className="h-px w-8 bg-white" />
-          <p className="text-[8px] text-white font-black uppercase tracking-widest italic text-center">
-            Swipe to explore
-          </p>
-          <div className="h-px w-8 bg-white" />
-        </div>
       </div>
     </div>
   );
@@ -156,33 +160,126 @@ const HasilJadwal = ({
 }) => {
   const daftarHari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
   const daftarSesi = [1, 2, 3, 4, 5];
+  const topContainerRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
-  const activeFilters = filters || {
-    hanya3Hari: false,
-    hanya4Hari: false,
-    tanpaSesi1: false,
-    tanpaSesi2: false,
-    tanpaSesi3: false,
-    tanpaSesi4: false,
-    tanpaSesi5: false,
+  // Nilai default filter yang aman
+  const activeFilters = useMemo(
+    () => ({
+      hanya3Hari: false,
+      hanya4Hari: false,
+      tanpaSesi1: false,
+      tanpaSesi2: false,
+      tanpaSesi3: false,
+      tanpaSesi4: false,
+      tanpaSesi5: false,
+      dosenDisukai: [],
+      dosenDihindari: [],
+      ...filters,
+    }),
+    [filters],
+  );
+
+  // Ekstrak semua nama dosen unik dari input (mengabaikan "-" atau dosen kosong)
+  const daftarDosenUnik = useMemo(() => {
+    if (!hasilKombinasi || hasilKombinasi.length === 0) return [];
+    const allDosen = new Set();
+    hasilKombinasi.forEach((jadwal) => {
+      jadwal.forEach((kelas) => {
+        if (kelas.dosen && kelas.dosen !== "-" && kelas.dosen.trim() !== "") {
+          allDosen.add(kelas.dosen);
+        }
+      });
+    });
+    return Array.from(allDosen).sort();
+  }, [hasilKombinasi]);
+
+  const hasilTerfilter = useMemo(() => {
+    return hasilKombinasi.filter((kombinasi) => {
+      const hariKuliahUnik = new Set(kombinasi.map((k) => k.hari)).size;
+      const daftarDosenJadwalIni = kombinasi.map((k) => k.dosen);
+
+      // Filter Sesi
+      for (let i = 1; i <= 5; i++) {
+        if (
+          activeFilters[`tanpaSesi${i}`] &&
+          kombinasi.some((k) => {
+            const sesiArray = Array.isArray(k.sesi) ? k.sesi : [k.sesi];
+            return sesiArray.some((s) => String(s) === String(i));
+          })
+        )
+          return false;
+      }
+
+      // Filter Hari
+      if (activeFilters.hanya3Hari && hariKuliahUnik !== 3) return false;
+      if (activeFilters.hanya4Hari && hariKuliahUnik !== 4) return false;
+
+      // Filter Dosen Dihindari (Jika ada dosen ini, langsung buang jadwalnya)
+      if (activeFilters.dosenDihindari.length > 0) {
+        const adaDosenDihindari = activeFilters.dosenDihindari.some(
+          (dosenJelek) => daftarDosenJadwalIni.includes(dosenJelek),
+        );
+        if (adaDosenDihindari) return false;
+      }
+
+      // Filter Dosen Favorit (Semua dosen favorit di array WAJIB ada di jadwal ini)
+      if (activeFilters.dosenDisukai.length > 0) {
+        const semuaDosenFavoritAda = activeFilters.dosenDisukai.every(
+          (dosenBagus) => daftarDosenJadwalIni.includes(dosenBagus),
+        );
+        if (!semuaDosenFavoritAda) return false;
+      }
+
+      return true;
+    });
+  }, [hasilKombinasi, activeFilters]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilters, hasilKombinasi]);
+
+  const totalPages = Math.ceil(hasilTerfilter.length / ITEMS_PER_PAGE);
+  const paginatedData = hasilTerfilter.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  const scrollToTop = () => {
+    if (topContainerRef.current) {
+      topContainerRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
-  const hasilTerfilter = hasilKombinasi.filter((kombinasi) => {
-    const hariKuliahUnik = new Set(kombinasi.map((k) => k.hari)).size;
-    for (let i = 1; i <= 5; i++) {
-      if (
-        activeFilters[`tanpaSesi${i}`] &&
-        kombinasi.some((k) => k.sesi.includes(i))
-      )
-        return false;
-    }
-    if (activeFilters.hanya3Hari && hariKuliahUnik !== 3) return false;
-    if (activeFilters.hanya4Hari && hariKuliahUnik !== 4) return false;
-    return true;
-  });
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+    scrollToTop();
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+    scrollToTop();
+  };
+
+  // Fungsi helper untuk menambah/menghapus dosen dari filter array
+  const toggleDosenFilter = (tipe, namaDosen) => {
+    const currentList = activeFilters[tipe] || [];
+    const newList = currentList.includes(namaDosen)
+      ? currentList.filter((d) => d !== namaDosen)
+      : [...currentList, namaDosen];
+
+    setFilters({ ...activeFilters, [tipe]: newList });
+  };
 
   return (
-    <div className="bg-uajy-bg-dark p-4 sm:p-8 rounded-3xl border border-white/10 shadow-2xl min-h-125">
+    <div
+      ref={topContainerRef}
+      className="bg-uajy-bg-dark p-4 sm:p-8 rounded-3xl border border-white/10 shadow-2xl min-h-125 scroll-mt-6"
+    >
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2.5 bg-uajy-yellow text-uajy-bg rounded-xl shrink-0 shadow-lg">
@@ -195,6 +292,7 @@ const HasilJadwal = ({
 
         {isGenerated && hasilKombinasi.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-uajy-bg p-4 sm:p-6 rounded-2xl border border-white/5">
+            {/* Bagian Hari & Sesi (Tetap Sama) */}
             <div className="space-y-3">
               <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
                 Day Density
@@ -239,6 +337,112 @@ const HasilJadwal = ({
                 ))}
               </div>
             </div>
+
+            {/* BARU: Filter Dosen */}
+            {daftarDosenUnik.length > 0 && (
+              <div className="col-span-1 lg:col-span-2 mt-2 pt-4 border-t border-white/10 space-y-4">
+                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
+                  Dosen Preference
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Kolom Dosen Favorit */}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase">
+                      <UserCheck size={12} /> Wajib Ada
+                    </div>
+                    <select
+                      className="w-full bg-uajy-bg-dark border border-white/10 rounded-xl p-2 text-xs text-white outline-none focus:border-emerald-500"
+                      onChange={(e) => {
+                        if (e.target.value)
+                          toggleDosenFilter("dosenDisukai", e.target.value);
+                        e.target.value = ""; // Reset select
+                      }}
+                    >
+                      <option value="">+ Tambah Dosen Favorit</option>
+                      {daftarDosenUnik.map((dosen) => (
+                        <option
+                          key={`fav-${dosen}`}
+                          value={dosen}
+                          disabled={
+                            activeFilters.dosenDisukai.includes(dosen) ||
+                            activeFilters.dosenDihindari.includes(dosen)
+                          }
+                        >
+                          {dosen}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Badges Dosen Favorit */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {activeFilters.dosenDisukai.map((dosen) => (
+                        <span
+                          key={dosen}
+                          className="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[9px] px-2 py-1 rounded-md font-bold uppercase"
+                        >
+                          {dosen}{" "}
+                          <X
+                            size={10}
+                            className="cursor-pointer hover:text-white"
+                            onClick={() =>
+                              toggleDosenFilter("dosenDisukai", dosen)
+                            }
+                          />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Kolom Dosen Blacklist */}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-rose-400 uppercase">
+                      <UserMinus size={12} /> Hindari
+                    </div>
+                    <select
+                      className="w-full bg-uajy-bg-dark border border-white/10 rounded-xl p-2 text-xs text-white outline-none focus:border-rose-500"
+                      onChange={(e) => {
+                        if (e.target.value)
+                          toggleDosenFilter("dosenDihindari", e.target.value);
+                        e.target.value = ""; // Reset select
+                      }}
+                    >
+                      <option value="">+ Tambah Dosen Dihindari</option>
+                      {daftarDosenUnik.map((dosen) => (
+                        <option
+                          key={`bad-${dosen}`}
+                          value={dosen}
+                          disabled={
+                            activeFilters.dosenDihindari.includes(dosen) ||
+                            activeFilters.dosenDisukai.includes(dosen)
+                          }
+                        >
+                          {dosen}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Badges Dosen Dihindari */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {activeFilters.dosenDihindari.map((dosen) => (
+                        <span
+                          key={dosen}
+                          className="inline-flex items-center gap-1 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[9px] px-2 py-1 rounded-md font-bold uppercase"
+                        >
+                          {dosen}{" "}
+                          <X
+                            size={10}
+                            className="cursor-pointer hover:text-white"
+                            onClick={() =>
+                              toggleDosenFilter("dosenDihindari", dosen)
+                            }
+                          />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -277,6 +481,8 @@ const HasilJadwal = ({
                 tanpaSesi3: false,
                 tanpaSesi4: false,
                 tanpaSesi5: false,
+                dosenDisukai: [],
+                dosenDihindari: [], // Reset filter dosen juga
               })
             }
             className="w-full sm:w-auto px-8 py-3 bg-uajy-bg text-uajy-yellow text-[10px] font-black uppercase tracking-widest rounded-xl border border-uajy-yellow/20 shadow-xl"
@@ -296,18 +502,47 @@ const HasilJadwal = ({
               Optimal Schedule Configurations
             </p>
           </div>
+
           <div className="space-y-10">
-            {hasilTerfilter.map((kombinasi, index) => (
-              <KartuJadwal
-                key={index}
-                kombinasi={kombinasi}
-                index={index}
-                waktuSesi={waktuSesi}
-                daftarHari={daftarHari}
-                daftarSesi={daftarSesi}
-              />
-            ))}
+            {paginatedData.map((kombinasi, idx) => {
+              const absoluteIndex =
+                (currentPage - 1) * ITEMS_PER_PAGE + idx + 1;
+              return (
+                <KartuJadwal
+                  key={absoluteIndex}
+                  kombinasi={kombinasi}
+                  index={absoluteIndex}
+                  waktuSesi={waktuSesi}
+                  daftarHari={daftarHari}
+                  daftarSesi={daftarSesi}
+                />
+              );
+            })}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-10 border-t border-white/10 pt-6">
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-none disabled:opacity-30 disabled:cursor-not-allowed bg-uajy-bg border border-white/10 text-white hover:border-uajy-yellow hover:text-uajy-yellow"
+              >
+                Previous
+              </button>
+              <div className="text-white/50 text-[10px] font-black uppercase tracking-widest hidden sm:block">
+                Page{" "}
+                <span className="text-uajy-yellow text-sm">{currentPage}</span>{" "}
+                of {totalPages}
+              </div>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-none disabled:opacity-30 disabled:cursor-not-allowed bg-uajy-bg border border-white/10 text-white hover:border-uajy-yellow hover:text-uajy-yellow"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
