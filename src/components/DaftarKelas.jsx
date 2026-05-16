@@ -45,12 +45,12 @@ const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
                 className={`bg-uajy-bg-dark p-4 rounded-xl border border-white/10 border-l-[6px] ${borderColorClass} flex justify-between items-center group transition-none`}
               >
                 <div className="min-w-0">
-                  <h4 className="text-white font-black text-sm tracking-tight truncate uppercase leading-tight">
+                  <h4 className="text-white font-black text-sm tracking-tight truncate leading-tight">
                     {item.nama}
                   </h4>
 
                   {item.dosen && item.dosen !== "-" && (
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-white/50 truncate uppercase mt-1">
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-white/50 truncate mt-1">
                       <User size={10} />
                       {item.dosen}
                     </div>
@@ -58,7 +58,7 @@ const DaftarKelas = ({ jadwal, onHapus, onEdit, waktuSesi }) => {
 
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className="text-[9px] font-black px-1.5 py-0.5 bg-uajy-bg text-uajy-yellow rounded border border-white/5">
-                      KLAS {item.kelas}
+                      Kelas {item.kelas}
                     </span>
                     <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">
                       {item.hari} •{" "}

@@ -126,7 +126,6 @@ const KartuJadwal = ({
                               <span className="font-black text-[8px] sm:text-[10px] leading-tight uppercase line-clamp-2 print:text-black">
                                 {matkul.namaMatkul}
                               </span>
-                              {/* Tambahan: Tampilkan nama dosen kecil di bawah nama matkul */}
                               <span className="text-[6px] sm:text-[7px] font-bold text-white/70 uppercase truncate print:text-slate-600">
                                 {matkul.dosen !== "-" ? matkul.dosen : ""}
                               </span>
@@ -164,11 +163,12 @@ const HasilJadwal = ({
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
-  // Nilai default filter yang aman
+  // 1. UPDATE: Tambahkan hanya5Hari di default filters
   const activeFilters = useMemo(
     () => ({
       hanya3Hari: false,
       hanya4Hari: false,
+      hanya5Hari: false,
       tanpaSesi1: false,
       tanpaSesi2: false,
       tanpaSesi3: false,
@@ -181,7 +181,6 @@ const HasilJadwal = ({
     [filters],
   );
 
-  // Ekstrak semua nama dosen unik dari input (mengabaikan "-" atau dosen kosong)
   const daftarDosenUnik = useMemo(() => {
     if (!hasilKombinasi || hasilKombinasi.length === 0) return [];
     const allDosen = new Set();
@@ -200,7 +199,6 @@ const HasilJadwal = ({
       const hariKuliahUnik = new Set(kombinasi.map((k) => k.hari)).size;
       const daftarDosenJadwalIni = kombinasi.map((k) => k.dosen);
 
-      // Filter Sesi
       for (let i = 1; i <= 5; i++) {
         if (
           activeFilters[`tanpaSesi${i}`] &&
@@ -212,11 +210,11 @@ const HasilJadwal = ({
           return false;
       }
 
-      // Filter Hari
+      // 2. UPDATE: Logika filter untuk 3, 4, dan 5 Hari
       if (activeFilters.hanya3Hari && hariKuliahUnik !== 3) return false;
       if (activeFilters.hanya4Hari && hariKuliahUnik !== 4) return false;
+      if (activeFilters.hanya5Hari && hariKuliahUnik !== 5) return false;
 
-      // Filter Dosen Dihindari (Jika ada dosen ini, langsung buang jadwalnya)
       if (activeFilters.dosenDihindari.length > 0) {
         const adaDosenDihindari = activeFilters.dosenDihindari.some(
           (dosenJelek) => daftarDosenJadwalIni.includes(dosenJelek),
@@ -224,7 +222,6 @@ const HasilJadwal = ({
         if (adaDosenDihindari) return false;
       }
 
-      // Filter Dosen Favorit (Semua dosen favorit di array WAJIB ada di jadwal ini)
       if (activeFilters.dosenDisukai.length > 0) {
         const semuaDosenFavoritAda = activeFilters.dosenDisukai.every(
           (dosenBagus) => daftarDosenJadwalIni.includes(dosenBagus),
@@ -265,7 +262,6 @@ const HasilJadwal = ({
     scrollToTop();
   };
 
-  // Fungsi helper untuk menambah/menghapus dosen dari filter array
   const toggleDosenFilter = (tipe, namaDosen) => {
     const currentList = activeFilters[tipe] || [];
     const newList = currentList.includes(namaDosen)
@@ -292,22 +288,31 @@ const HasilJadwal = ({
 
         {isGenerated && hasilKombinasi.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-uajy-bg p-4 sm:p-6 rounded-2xl border border-white/5">
-            {/* Bagian Hari & Sesi (Tetap Sama) */}
             <div className="space-y-3">
               <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
                 Day Density
               </p>
               <div className="flex gap-2">
-                {[3, 4].map((n) => (
+                {/* 3. UPDATE: Mapping 3, 4, 5 dan perbaikan logika mutual eksklusif */}
+                {[3, 4, 5].map((n) => (
                   <button
                     key={n}
-                    onClick={() =>
-                      setFilters({
-                        ...activeFilters,
-                        [`hanya${n}Hari`]: !activeFilters[`hanya${n}Hari`],
-                        [`hanya${n === 3 ? 4 : 3}Hari`]: false,
-                      })
-                    }
+                    onClick={() => {
+                      const newFilters = { ...activeFilters };
+
+                      // Matikan opsi hari yang lain jika opsi ini diklik
+                      [3, 4, 5].forEach((dayCount) => {
+                        if (dayCount !== n) {
+                          newFilters[`hanya${dayCount}Hari`] = false;
+                        }
+                      });
+
+                      // Toggle (hidup/mati) opsi yang diklik
+                      newFilters[`hanya${n}Hari`] =
+                        !activeFilters[`hanya${n}Hari`];
+
+                      setFilters(newFilters);
+                    }}
                     className={`flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-none border ${activeFilters[`hanya${n}Hari`] ? "bg-uajy-yellow text-uajy-bg border-uajy-yellow shadow-lg shadow-uajy-yellow/20" : "bg-uajy-bg-dark text-white/30 border-white/5 hover:text-white"}`}
                   >
                     {n} HARI
@@ -338,14 +343,12 @@ const HasilJadwal = ({
               </div>
             </div>
 
-            {/* BARU: Filter Dosen */}
             {daftarDosenUnik.length > 0 && (
               <div className="col-span-1 lg:col-span-2 mt-2 pt-4 border-t border-white/10 space-y-4">
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">
                   Dosen Preference
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Kolom Dosen Favorit */}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase">
                       <UserCheck size={12} /> Wajib Ada
@@ -355,7 +358,7 @@ const HasilJadwal = ({
                       onChange={(e) => {
                         if (e.target.value)
                           toggleDosenFilter("dosenDisukai", e.target.value);
-                        e.target.value = ""; // Reset select
+                        e.target.value = "";
                       }}
                     >
                       <option value="">+ Tambah Dosen Favorit</option>
@@ -373,7 +376,6 @@ const HasilJadwal = ({
                       ))}
                     </select>
 
-                    {/* Badges Dosen Favorit */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {activeFilters.dosenDisukai.map((dosen) => (
                         <span
@@ -393,7 +395,6 @@ const HasilJadwal = ({
                     </div>
                   </div>
 
-                  {/* Kolom Dosen Blacklist */}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-rose-400 uppercase">
                       <UserMinus size={12} /> Hindari
@@ -403,7 +404,7 @@ const HasilJadwal = ({
                       onChange={(e) => {
                         if (e.target.value)
                           toggleDosenFilter("dosenDihindari", e.target.value);
-                        e.target.value = ""; // Reset select
+                        e.target.value = "";
                       }}
                     >
                       <option value="">+ Tambah Dosen Dihindari</option>
@@ -421,7 +422,6 @@ const HasilJadwal = ({
                       ))}
                     </select>
 
-                    {/* Badges Dosen Dihindari */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {activeFilters.dosenDihindari.map((dosen) => (
                         <span
@@ -476,13 +476,14 @@ const HasilJadwal = ({
               setFilters({
                 hanya3Hari: false,
                 hanya4Hari: false,
+                hanya5Hari: false, // 4. UPDATE: Tambahkan ke fungsi reset filter
                 tanpaSesi1: false,
                 tanpaSesi2: false,
                 tanpaSesi3: false,
                 tanpaSesi4: false,
                 tanpaSesi5: false,
                 dosenDisukai: [],
-                dosenDihindari: [], // Reset filter dosen juga
+                dosenDihindari: [],
               })
             }
             className="w-full sm:w-auto px-8 py-3 bg-uajy-bg text-uajy-yellow text-[10px] font-black uppercase tracking-widest rounded-xl border border-uajy-yellow/20 shadow-xl"

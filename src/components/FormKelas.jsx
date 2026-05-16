@@ -163,7 +163,7 @@ const FormKelas = ({
               className="w-full bg-uajy-bg border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-uajy-yellow outline-none transition-none placeholder:text-white/20"
               value={input.nama}
               onChange={(e) => setInput({ ...input, nama: e.target.value })}
-              placeholder="Contoh: Pemrograman Web"
+              placeholder="Masukkan mata kuliah"
             />
           </div>
 
@@ -176,7 +176,7 @@ const FormKelas = ({
               className="w-full bg-uajy-bg border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-uajy-yellow outline-none transition-none placeholder:text-white/20"
               value={input.dosen}
               onChange={(e) => setInput({ ...input, dosen: e.target.value })}
-              placeholder="Contoh: Prof. Ir. Suyoto"
+              placeholder="Masukkan nama dosen"
             />
           </div>
 
